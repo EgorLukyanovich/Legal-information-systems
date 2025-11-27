@@ -12,6 +12,12 @@ import (
 
 type User struct {
 	ID        uuid.UUID
+	FirstName string
+	LastName  string
+	UserName  string
+	Email     string
+	Password  string
+	UserTest  int32
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

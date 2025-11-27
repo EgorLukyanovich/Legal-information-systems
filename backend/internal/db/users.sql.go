@@ -12,32 +12,49 @@ import (
 	"github.com/google/uuid"
 )
 
-const createUser = `-- name: CreateUser :one
+const createUser = `-- name: CreateUser :exec
 INSERT INTO users (
-id,
-created_at,
-updated_at
+    id,
+    first_name,
+    last_name,
+    user_name,
+    email,
+    password,
+    user_test
 )
-VALUES (
-$1, $2, $3
-)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING
-id,
-created_at,
-updated_at
+    id,
+    first_name,
+    last_name,
+    user_name,
+    email,
+    user_test,
+    created_at,
+    updated_at
 `
 
 type CreateUserParams struct {
 	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	FirstName string
+	LastName  string
+	UserName  string
+	Email     string
+	Password  string
+	UserTest  int32
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.ID, arg.CreatedAt, arg.UpdatedAt)
-	var i User
-	err := row.Scan(&i.ID, &i.CreatedAt, &i.UpdatedAt)
-	return i, err
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
+	_, err := q.db.ExecContext(ctx, createUser,
+		arg.ID,
+		arg.FirstName,
+		arg.LastName,
+		arg.UserName,
+		arg.Email,
+		arg.Password,
+		arg.UserTest,
+	)
+	return err
 }
 
 const deleteUser = `-- name: DeleteUser :exec
@@ -50,73 +67,156 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const getAllUsers = `-- name: GetAllUsers :many
+const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT
-id,
-created_at,
-updated_at
+    id,
+    first_name,
+    last_name,
+    user_name,
+    email,
+    password,
+    user_test,
+    created_at,
+    updated_at
 FROM users
-ORDER BY created_at
+WHERE email = $1
 `
 
-func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, getAllUsers)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(&i.ID, &i.CreatedAt, &i.UpdatedAt); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.UserName,
+		&i.Email,
+		&i.Password,
+		&i.UserTest,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
 SELECT
-id,
-created_at,
-updated_at
+    id,
+    first_name,
+    last_name,
+    user_name,
+    email,
+    user_test,
+    created_at,
+    updated_at
 FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByID, id)
-	var i User
-	err := row.Scan(&i.ID, &i.CreatedAt, &i.UpdatedAt)
-	return i, err
-}
-
-const updateUserUpdatedAt = `-- name: UpdateUserUpdatedAt :one
-UPDATE users
-SET
-updated_at = $2
-WHERE id = $1
-RETURNING
-id,
-created_at,
-updated_at
-`
-
-type UpdateUserUpdatedAtParams struct {
+type GetUserByIDRow struct {
 	ID        uuid.UUID
+	FirstName string
+	LastName  string
+	UserName  string
+	Email     string
+	UserTest  int32
+	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
-func (q *Queries) UpdateUserUpdatedAt(ctx context.Context, arg UpdateUserUpdatedAtParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, updateUserUpdatedAt, arg.ID, arg.UpdatedAt)
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i GetUserByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.UserName,
+		&i.Email,
+		&i.UserTest,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByLogin = `-- name: GetUserByLogin :one
+SELECT
+    id,
+    first_name,
+    last_name,
+    user_name,
+    email,
+    password,
+    user_test,
+    created_at,
+    updated_at
+FROM users
+WHERE user_name = $1 OR email = $1
+`
+
+func (q *Queries) GetUserByLogin(ctx context.Context, userName string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByLogin, userName)
 	var i User
-	err := row.Scan(&i.ID, &i.CreatedAt, &i.UpdatedAt)
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.UserName,
+		&i.Email,
+		&i.Password,
+		&i.UserTest,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserUserTest = `-- name: UpdateUserUserTest :one
+UPDATE users
+SET
+    user_test = $2,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING
+    id,
+    first_name,
+    last_name,
+    user_name,
+    email,
+    user_test,
+    created_at,
+    updated_at
+`
+
+type UpdateUserUserTestParams struct {
+	ID       uuid.UUID
+	UserTest int32
+}
+
+type UpdateUserUserTestRow struct {
+	ID        uuid.UUID
+	FirstName string
+	LastName  string
+	UserName  string
+	Email     string
+	UserTest  int32
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) UpdateUserUserTest(ctx context.Context, arg UpdateUserUserTestParams) (UpdateUserUserTestRow, error) {
+	row := q.db.QueryRowContext(ctx, updateUserUserTest, arg.ID, arg.UserTest)
+	var i UpdateUserUserTestRow
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.UserName,
+		&i.Email,
+		&i.UserTest,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }

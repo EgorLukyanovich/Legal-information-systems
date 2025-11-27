@@ -4,30 +4,33 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	models "github.com/egor_lukyanovich/legal-information-systems/backend/internal/models"
 )
 
-func RespondWithError(w http.ResponseWriter, code int, msg string) {
-	if code > 499 {
-		log.Println("Responding with 5XX error: ", msg)
-	}
-	type errResponse struct {
-		Error string `json: "error"`
+func RespondError(w http.ResponseWriter, code int, errCode, msg string) {
+	if code >= 500 {
+		log.Println("Server error:", msg)
 	}
 
-	RespondWithJSON(w, code, errResponse{
-		Error: msg,
-	})
+	res := models.ErrorResponse{}
+	res.Error.Code = errCode
+	res.Error.Message = msg
+
+	RespondJSON(w, code, res)
 }
 
-func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	dat, err := json.Marshal(payload)
+func RespondJSON(w http.ResponseWriter, code int, payload interface{}) {
+	data, err := json.Marshal(payload)
 	if err != nil {
-		log.Printf("Failed to marshal JSON response: %v", err)
+		log.Println("marshal json error:", err)
 		w.WriteHeader(500)
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(dat)
+	if _, err := w.Write(data); err != nil {
+		log.Println("write response failed:", err)
+	}
 
 }

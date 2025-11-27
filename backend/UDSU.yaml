@@ -1,0 +1,517 @@
+openapi: 3.0.0
+info:
+  title: API Lawyer
+  version: '1.0'
+  description: Сайт для юристов
+  contact:
+    name: Булатов Савелий
+servers:
+  - url: 'http://localhost:3000'
+paths:
+  /user-create:
+    post:
+      summary: Регистрация нового пользователя
+      operationId: post-user
+      tags:
+        - user
+      description: Регистрация пользователя в системе
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+            examples:
+              example-1:
+                value:
+                  firstName: Иван
+                  lastName: Петров
+                  email: ivan@mail.ru
+                  password: '234567'
+                  userName: Ivan
+      responses:
+        '200':
+          description: Пользователь успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '422':
+          description: Невалидные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Email уже зарегистрирован
+  /user-authorization:
+    post:
+      summary: Авторизация пользователя
+      operationId: post-user-authorization
+      tags:
+        - user
+      description: Получение токена авторизации
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAuthorization'
+            examples:
+              example-1:
+                value:
+                  login: Sava
+                  password: '123456'
+      responses:
+        '200':
+          description: Успешная авторизация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '422':
+          description: Невалидные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+  /user/profile:
+    get:
+      summary: Получение профиля пользователя
+      description: Возвращает данные профиля авторизованного пользователя
+      tags:
+        - user
+      parameters:
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Токен авторизации пользователя
+      responses:
+        '200':
+          description: Данные профиля
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+              examples:
+                example-1:
+                  value:
+                    userName: Sava
+                    email: sava@mail.ru
+                    userTest: 5
+                    firstName: Савелий
+                    lastName: Булатов
+        '401':
+          description: Пользователь не авторизован
+        '500':
+          description: Ошибка сервера
+  /answer:
+    post:
+      summary: Отправка ответов на тест
+      operationId: post-answer
+      tags:
+        - site
+      description: Отправка ответов пользователя для проверки
+      parameters:
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Токен авторизации
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestAnswerRequest'
+            examples:
+              example-1:
+                value:
+                  testId: 1
+                  answers:
+                    - questionId: 101
+                      selectedAnswerIds:
+                        - 3
+                    - questionId: 102
+                      selectedAnswerIds:
+                        - 5
+      responses:
+        '200':
+          description: Результат проверки теста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestAnswerResponse'
+        '422':
+          description: Ошибка в данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Ошибка сервера
+  /theory:
+    get:
+      summary: Получение теорий
+      operationId: get-theory
+      tags:
+        - site
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          description: Токен авторизации
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Theory'
+              examples:
+                example-1:
+                  value:
+                    - theoryName: Название теории
+                      theoryDescription: Краткое описание
+                      theoryFull: Полный текст теории
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+  /exemple:
+    get:
+      summary: Получение примеров
+      description: 'Возвращает список примеров, связанных с теорией'
+      tags:
+        - site
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Example'
+              examples:
+                example-1:
+                  value:
+                    - id: 1
+                      exampleName: Пример 1
+                      exampleDescription: Краткое описание
+                      exampleFull: Полный текст примера
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+  /questions:
+    get:
+      summary: Получение теста с вопросами
+      description: Возвращает структуру теста с вопросами и вариантами ответов
+      tags:
+        - site
+      parameters:
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Токен авторизации пользователя
+      responses:
+        '200':
+          description: Тест успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Test'
+              examples:
+                example-1:
+                  value:
+                    testId: 1
+                    testName: Тест 1
+                    questions:
+                      - id: 101
+                        text: Сколько вам лет?
+                        multiple: false
+                        answers:
+                          - id: 1
+                            text: '16'
+                          - id: 2
+                            text: '17'
+                          - id: 3
+                            text: '18'
+                      - id: 102
+                        text: Какой ваш любимый цвет?
+                        multiple: false
+                        answers:
+                          - id: 4
+                            text: Красный
+                          - id: 5
+                            text: Синий
+                          - id: 6
+                            text: Зелёный
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+components:
+  schemas:
+    User:
+      title: User
+      type: object
+      description: Данные пользователя
+      properties:
+        firstName:
+          type: string
+          description: Имя
+          example: Иван
+        lastName:
+          type: string
+          description: Фамилия
+          example: Петров
+        email:
+          type: string
+          description: Email
+          format: email
+          example: ivan@mail.ru
+        password:
+          type: string
+          description: Пароль
+          minLength: 6
+          maxLength: 25
+          example: '234567'
+        userName:
+          type: string
+          description: Логин
+          minLength: 4
+          maxLength: 20
+          example: Ivan
+      required:
+        - firstName
+        - lastName
+        - email
+        - password
+        - userName
+    UserAuthorization:
+      title: UserAuthorization
+      type: object
+      properties:
+        login:
+          type: string
+          example: Sava
+        password:
+          type: string
+          example: '123456'
+      required:
+        - login
+        - password
+    Token:
+      title: Token
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    UserProfile:
+      title: UserProfile
+      description: Профиль пользователя
+      type: object
+      properties:
+        userName:
+          type: string
+          example: Sava
+        email:
+          type: string
+          example: sava@mail.ru
+        userTest:
+          type: integer
+          example: 5
+        firstName:
+          type: string
+          example: Савелий
+        lastName:
+          type: string
+          example: Булатов
+      required:
+        - userName
+        - email
+        - firstName
+        - lastName
+    Theory:
+      title: Theory
+      description: Теоретический материал
+      type: object
+      properties:
+        theoryName:
+          type: string
+          example: Название теории
+        theoryDescription:
+          type: string
+          example: Краткое описание
+        theoryFull:
+          type: string
+          example: Полный текст теории
+    Example:
+      title: Example
+      description: 'Пример, связанный с теорией'
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        exampleName:
+          type: string
+          example: Пример 1
+        exampleDescription:
+          type: string
+          example: Краткое описание
+        exampleFull:
+          type: string
+          example: Полный текст примера
+    TestAnswerRequest:
+      title: TestAnswerRequest
+      description: Ответы пользователя на тест
+      type: object
+      properties:
+        testId:
+          type: integer
+          example: 1
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              questionId:
+                type: integer
+                example: 101
+              selectedAnswerIds:
+                type: array
+                items:
+                  type: integer
+                example:
+                  - 3
+                  - 5
+      required:
+        - testId
+        - answers
+    TestAnswerResponse:
+      title: TestAnswerResponse
+      description: Результат проверки теста
+      type: object
+      properties:
+        testId:
+          type: integer
+          example: 1
+        score:
+          type: integer
+          example: 2
+      required:
+        - testId
+        - score
+    Error:
+      title: Error
+      description: Описание ошибки
+      type: object
+      properties:
+        code:
+          type: string
+          example: '411'
+        text:
+          type: string
+          example: Неправильный формат почты
+      required:
+        - code
+        - text
+    Test:
+      title: Test
+      description: Тест с вопросами и вариантами ответов
+      type: object
+      properties:
+        testId:
+          type: integer
+          description: ID теста
+          example: 1
+        testName:
+          type: string
+          description: Название теста
+          minLength: 4
+          maxLength: 50
+          example: Тест 1
+        questions:
+          type: array
+          description: Список вопросов
+          items:
+            $ref: '#/components/schemas/Question'
+      required:
+        - testId
+        - testName
+        - questions
+    Question:
+      title: Question
+      description: Вопрос в тесте
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID вопроса
+          example: 101
+        text:
+          type: string
+          description: Текст вопроса
+          minLength: 4
+          maxLength: 100
+          example: Сколько вам лет?
+        multiple:
+          type: boolean
+          description: Возможен ли множественный выбор
+          example: false
+        answers:
+          type: array
+          description: Варианты ответов
+          items:
+            $ref: '#/components/schemas/Answer'
+      required:
+        - id
+        - text
+        - answers
+    Answer:
+      title: Answer
+      description: Вариант ответа
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID ответа
+          example: 1
+        text:
+          type: string
+          description: Текст варианта ответа
+          example: '16'
+      required:
+        - id
+        - text
+tags:
+  - name: user
+    description: 'Методы, связанные с пользователем'
+  - name: site
+    description: 'Раздел сайта, доступный после входа'
