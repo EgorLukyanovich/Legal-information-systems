@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/egor_lukyanovich/legal-information-systems/backend/internal/handlers"
 	"github.com/egor_lukyanovich/legal-information-systems/backend/pkg/app"
 	"github.com/egor_lukyanovich/legal-information-systems/backend/pkg/routing"
 )
@@ -17,7 +18,10 @@ func main() {
 
 	defer storage.DB.Close()
 
+	userHandler := handlers.NewUserHandlers(storage.Queries)
 	router := routing.NewRouter(*storage)
+
+	router.Post("/user-create", userHandler.CreateUser)
 
 	server := &http.Server{
 		Handler:           router,
