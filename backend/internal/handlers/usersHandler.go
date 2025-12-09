@@ -3,12 +3,16 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/egor_lukyanovich/legal-information-systems/backend/internal/db"
 	"github.com/egor_lukyanovich/legal-information-systems/backend/internal/models"
 	json_resp "github.com/egor_lukyanovich/legal-information-systems/backend/pkg/json"
 	"github.com/go-playground/validator"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 /*
@@ -31,18 +35,25 @@ func (u *UserHandlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		json_resp.RespondError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "could not hash password")
+		return
+	}
+
 	params := db.CreateUserParams{
 		ID:        uuid.New(),
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		UserName:  user.UserName,
 		Email:     user.Email,
-		Password:  user.Password,
+		Password:  string(hashedPassword),
 		UserTest:  0, // дефолт
 	}
 
 	if err := valid.Struct(params); err != nil {
 		json_resp.RespondError(w, 422, "INVALID_DATA", "invalid data")
+		return
 	}
 
 	// Проверка: мыла
@@ -55,6 +66,8 @@ func (u *UserHandlers) CreateUser(w http.ResponseWriter, r *http.Request) {
 		json_resp.RespondError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
 		return
 	}
+	//а чтобы не палить
+	user.Password = ""
 
 	json_resp.RespondJSON(w, 200, map[string]interface{}{
 		"user": user,
@@ -74,33 +87,48 @@ func (u *UserHandlers) UserAuthHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if auth.Password != user.Password {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(auth.Password)); err != nil {
 		json_resp.RespondError(w, 401, "UNAUTHORIZED", "invalid password")
 		return
 	}
 
-	//TODO: мб и до jwt дойду
-	token := "test_token"
+	jwtKey := os.Getenv("JWT_SECRET")
+
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(), // протухнет через 24 часа
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		json_resp.RespondError(w, 500, "INTERNAL_ERROR", "token generation failed")
+		return
+	}
 
 	json_resp.RespondJSON(w, 200, map[string]any{
-		"token": token,
+		"token": tokenString,
 	})
 }
 
 func (u *UserHandlers) GetUserProfile(w http.ResponseWriter, r *http.Request) {
-	token := r.Header.Get("token")
-	if token == "" {
-		json_resp.RespondError(w, 401, "UNAUTHORIZED", "missing token")
+	userID, ok := r.Context().Value(UserIDKey).(uuid.UUID)
+	if !ok {
+		json_resp.RespondError(w, 500, "INTERNAL_ERROR", "failed to get user context")
 		return
 	}
 
-	// TODO: мб и до jwt дойду
-	// пока просто заглушка
+	user, err := u.q.GetUserByID(r.Context(), userID)
+	if err != nil {
+		json_resp.RespondError(w, 500, "INTERNAL_ERROR", "database error: "+err.Error())
+		return
+	}
+
 	json_resp.RespondJSON(w, 200, map[string]any{
-		"userName":  "Sava",
-		"email":     "sava@mail.ru",
-		"userTest":  5,
-		"firstName": "Савелий",
-		"lastName":  "Булатов",
+		"userName":  user.UserName,
+		"email":     user.Email,
+		"userTest":  user.UserTest,
+		"firstName": user.FirstName,
+		"lastName":  user.LastName,
 	})
 }

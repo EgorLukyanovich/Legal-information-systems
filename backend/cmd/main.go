@@ -21,7 +21,10 @@ func main() {
 	userHandler := handlers.NewUserHandlers(storage.Queries)
 	router := routing.NewRouter(*storage)
 
-	router.Post("/user-create", userHandler.CreateUser)
+	router.Post("/user/create", userHandler.CreateUser)
+	router.Post("/user/auth", userHandler.UserAuthHandler)
+
+	router.Get("user/profile", handlers.AuthMiddleware(userHandler.GetUserProfile))
 
 	server := &http.Server{
 		Handler:           router,
