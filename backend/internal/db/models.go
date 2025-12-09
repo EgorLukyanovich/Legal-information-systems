@@ -10,6 +10,44 @@ import (
 	"github.com/google/uuid"
 )
 
+type Answer struct {
+	ID         int32
+	QuestionID int32
+	Text       string
+	IsCorrect  bool
+	CreatedAt  time.Time
+}
+
+type Example struct {
+	ID          uuid.UUID
+	Name        string
+	Description string
+	FullExample string
+	CreatedAt   time.Time
+}
+
+type Question struct {
+	ID        int32
+	TestID    uuid.UUID
+	Text      string
+	Multiple  bool
+	CreatedAt time.Time
+}
+
+type Test struct {
+	ID        uuid.UUID
+	Name      string
+	CreatedAt time.Time
+}
+
+type Theory struct {
+	ID          uuid.UUID
+	Name        string
+	Description string
+	Theoryfull  string
+	CreatedAt   time.Time
+}
+
 type User struct {
 	ID        uuid.UUID
 	FirstName string

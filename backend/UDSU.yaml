@@ -108,8 +108,8 @@ paths:
         '401':
           description: Пользователь не авторизован
         '500':
-          description: Ошибка сервера
-  /answer:
+          description: Ошибка сервера)
+  /answer: #ОТСЮДА ПРОДОЛЖИТЬ
     post:
       summary: Отправка ответов на тест
       operationId: post-answer
