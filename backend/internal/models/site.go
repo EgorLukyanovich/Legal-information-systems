@@ -16,30 +16,30 @@ type Answer struct {
 
 type Example struct {
 	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	FullExample string    `json:"full_example"`
+	Name        string    `json:"name" validate:"required, min=4, max=50"`
+	Description string    `json:"description" validate:"required, min=2, max=50"`
+	FullExample string    `json:"full_example" validate:"required, min=4"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
 type Question struct {
 	ID        int32     `json:"id"`
 	TestID    uuid.UUID `json:"test_id"`
-	Text      string    `json:"text"`
+	Text      string    `json:"text" validate:"required, min=4, max=100"`
 	Multiple  bool      `json:"multiple"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 type Test struct {
 	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
+	Name      string    `json:"name" validate:"required, min=2, max=50"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 type Theory struct {
 	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Theoryfull  string    `json:"theoryfull"`
+	Name        string    `json:"name" validate:"required, min=4, max=50"`
+	Description string    `json:"description" validate:"required, min=2, max=50"`
+	Theoryfull  string    `json:"theoryfull" validate:"required, min=4"`
 	CreatedAt   time.Time `json:"created_at"`
 }
