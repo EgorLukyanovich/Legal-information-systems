@@ -43,3 +43,13 @@ type Theory struct {
 	Theoryfull  string    `json:"theoryfull" validate:"required, min=4"`
 	CreatedAt   time.Time `json:"created_at"`
 }
+
+type QuestionWithAnswers struct {
+	Question
+	Answers []Answer `json:"answers"`
+}
+
+type TestFullResponse struct {
+	Test
+	Questions []QuestionWithAnswers `json:"questions"`
+}

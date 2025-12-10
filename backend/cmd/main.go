@@ -19,12 +19,17 @@ func main() {
 	defer storage.DB.Close()
 
 	userHandler := handlers.NewUserHandlers(storage.Queries)
+	siteHandler := handlers.NewSiteHandlers(storage.Queries)
 	router := routing.NewRouter(*storage)
 
 	router.Post("/user/create", userHandler.CreateUser)
 	router.Post("/user/auth", userHandler.UserAuthHandler)
 
 	router.Get("user/profile", handlers.AuthMiddleware(userHandler.GetUserProfile))
+
+	router.Get("/theory", handlers.AuthMiddleware(siteHandler.GetTheories))
+	router.Get("/example", handlers.AuthMiddleware(siteHandler.GetExamples))
+	router.Get("/questions", handlers.AuthMiddleware(siteHandler.GetQuestions))
 
 	server := &http.Server{
 		Handler:           router,

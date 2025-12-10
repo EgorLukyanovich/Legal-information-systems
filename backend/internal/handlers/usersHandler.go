@@ -15,10 +15,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-/*
-TODO:
-*/
-
 type UserHandlers struct {
 	q *db.Queries
 }
