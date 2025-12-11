@@ -24,12 +24,15 @@ func main() {
 
 	router.Post("/user/create", userHandler.CreateUser)
 	router.Post("/user/auth", userHandler.UserAuthHandler)
+	router.Post("/answers", handlers.AuthMiddleware(siteHandler.SubmitTestAnswers))
+	router.Post("/theory/create", handlers.AuthMiddleware(siteHandler.CreateTheory))
+	router.Post("/exemple/create", handlers.AuthMiddleware(siteHandler.CreateExample))
 
-	router.Get("user/profile", handlers.AuthMiddleware(userHandler.GetUserProfile))
+	router.Get("/user/profile", handlers.AuthMiddleware(userHandler.GetUserProfile))
 
-	router.Get("/theory", handlers.AuthMiddleware(siteHandler.GetTheories))
-	router.Get("/example", handlers.AuthMiddleware(siteHandler.GetExamples))
-	router.Get("/questions", handlers.AuthMiddleware(siteHandler.GetQuestions))
+	router.Get("/theory/get", handlers.AuthMiddleware(siteHandler.GetTheories))
+	router.Get("/example/get", handlers.AuthMiddleware(siteHandler.GetExamples))
+	router.Get("/questions/get", handlers.AuthMiddleware(siteHandler.GetQuestions))
 
 	server := &http.Server{
 		Handler:           router,

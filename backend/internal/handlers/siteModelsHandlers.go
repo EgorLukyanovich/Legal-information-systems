@@ -1,13 +1,18 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/egor_lukyanovich/legal-information-systems/backend/internal/db"
 	"github.com/egor_lukyanovich/legal-information-systems/backend/internal/models"
 	json_resp "github.com/egor_lukyanovich/legal-information-systems/backend/pkg/json"
 )
 
+/*
+TODO: CreateTest доделать
+*/
 type SiteHandlers struct {
 	q *db.Queries
 }
@@ -15,6 +20,50 @@ type SiteHandlers struct {
 func NewSiteHandlers(queries *db.Queries) *SiteHandlers {
 	return &SiteHandlers{q: queries}
 }
+
+func (s *SiteHandlers) CreateTheory(w http.ResponseWriter, r *http.Request) {
+	var input models.Theory
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		json_resp.RespondError(w, 400, "BAD_REQUEST", "invalid body")
+		return
+	}
+
+	newTheory, err := s.q.CreateTheory(r.Context(), db.CreateTheoryParams{
+		Name:        input.Name,
+		Description: input.Description,
+		Theoryfull:  input.Theoryfull,
+		CreatedAt:   time.Now(),
+	})
+	if err != nil {
+		json_resp.RespondError(w, 500, "INTERNAL_ERROR", "failed to create theory")
+		return
+	}
+
+	json_resp.RespondJSON(w, 200, newTheory)
+}
+
+func (s *SiteHandlers) CreateExample(w http.ResponseWriter, r *http.Request) {
+	var input models.Example
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		json_resp.RespondError(w, 400, "BAD_REQUEST", "invalid body")
+		return
+	}
+
+	newExample, err := s.q.CreateExample(r.Context(), db.CreateExampleParams{
+		Name:        input.Name,
+		Description: input.Description,
+		FullExample: input.FullExample,
+		CreatedAt:   time.Now(),
+	})
+	if err != nil {
+		json_resp.RespondError(w, 500, "INTERNAL_ERROR", "failed to create example")
+		return
+	}
+
+	json_resp.RespondJSON(w, 200, newExample)
+}
+
+func (s *SiteHandlers) CreateTest(w http.ResponseWriter, r *http.Request) {} //потом
 
 func (s *SiteHandlers) GetTheories(w http.ResponseWriter, r *http.Request) {
 	theoriesDB, err := s.q.ListTheories(r.Context())
@@ -126,4 +175,74 @@ func (s *SiteHandlers) GetQuestions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json_resp.RespondJSON(w, 200, finalResponse)
+}
+
+func (s *SiteHandlers) SubmitTestAnswers(w http.ResponseWriter, r *http.Request) {
+	var req models.TestAnswerRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		json_resp.RespondError(w, 400, "BAD_REQUEST", "invalid request body")
+		return
+	}
+
+	correctAnswersDB, err := s.q.GetTestCorrectAnswers(r.Context(), req.TestID)
+	if err != nil {
+		json_resp.RespondError(w, 500, "INTERNAL_ERROR", "failed to check answers")
+		return
+	}
+
+	correctMap := make(map[int32][]int32)
+	for _, row := range correctAnswersDB {
+		qID := int32(row.QuestionID)
+		aID := int32(row.AnswerID)
+		correctMap[qID] = append(correctMap[qID], aID)
+	}
+
+	score := 0
+	totalQuestions := len(correctMap)
+
+	for _, userAns := range req.Answers {
+
+		correctIDs, exists := correctMap[userAns.QuestionID]
+		if !exists {
+			continue // вопроса нема либо у него ответов нема
+		}
+
+		if len(userAns.SelectedAnswerIDs) != len(correctIDs) {
+			continue // ответ неверный, выбрано лишнее или выбрана хуета
+		}
+
+		isCorrect := true
+		for _, selectedID := range userAns.SelectedAnswerIDs {
+			found := false
+			for _, correctID := range correctIDs {
+				if selectedID == correctID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				isCorrect = false
+				break
+			}
+		}
+
+		if isCorrect {
+			score++
+		}
+	}
+
+	percent := 0
+	if totalQuestions > 0 {
+		percent = (score * 100) / totalQuestions
+	}
+
+	resp := models.TestAnswerResponse{
+		TotalQuestions: totalQuestions,
+		CorrectAnswers: score,
+		ScorePercent:   percent,
+		IsPassed:       percent >= 70, // пока всегда 70%
+	}
+
+	json_resp.RespondJSON(w, 200, resp)
 }

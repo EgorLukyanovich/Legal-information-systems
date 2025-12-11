@@ -53,3 +53,20 @@ type TestFullResponse struct {
 	Test
 	Questions []QuestionWithAnswers `json:"questions"`
 }
+
+type UserAnswerInput struct {
+	QuestionID        int32   `json:"questionId"`
+	SelectedAnswerIDs []int32 `json:"selectedAnswerIds"`
+}
+
+type TestAnswerRequest struct {
+	TestID  uuid.UUID         `json:"testId"`
+	Answers []UserAnswerInput `json:"answers"`
+}
+
+type TestAnswerResponse struct {
+	TotalQuestions int  `json:"totalQuestions"`
+	CorrectAnswers int  `json:"correctAnswers"`
+	IsPassed       bool `json:"isPassed"`
+	ScorePercent   int  `json:"scorePercent"`
+}
