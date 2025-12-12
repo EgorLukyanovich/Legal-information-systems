@@ -25,8 +25,9 @@ func main() {
 	router.Post("/user/create", userHandler.CreateUser)
 	router.Post("/user/auth", userHandler.UserAuthHandler)
 	router.Post("/answers", handlers.AuthMiddleware(siteHandler.SubmitTestAnswers))
-	router.Post("/theory/create", handlers.AuthMiddleware(siteHandler.CreateTheory))
-	router.Post("/exemple/create", handlers.AuthMiddleware(siteHandler.CreateExample))
+	router.Post("/admin/theory", handlers.AuthMiddleware(siteHandler.CreateTheory))
+	router.Post("/admin/example", handlers.AuthMiddleware(siteHandler.CreateExample))
+	router.Post("/admin/test", handlers.AuthMiddleware(siteHandler.CreateTest))
 
 	router.Get("/user/profile", handlers.AuthMiddleware(userHandler.GetUserProfile))
 

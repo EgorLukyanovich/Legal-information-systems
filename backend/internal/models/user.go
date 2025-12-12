@@ -8,20 +8,20 @@ import (
 
 type User struct {
 	ID        uuid.UUID `json:"id"`
-	FirstName string    `json:"firstName" validate:"required, min=2, max=50"`
-	LastName  string    `json:"lastName" validate:"required, min=2, max=50"`
-	UserName  string    `json:"userName" validate:"required, min=4, max=25"`
+	FirstName string    `json:"first_name" validate:"required, min=2, max=50"`
+	LastName  string    `json:"last_name" validate:"required, min=2, max=50"`
+	UserName  string    `json:"user_name" validate:"required, min=4, max=25"`
 	Email     string    `json:"email" validate:"required,email"`
 	Password  string    `json:"password" validate:"required, min=6, max=25"`
-	UserTest  int32     `json:"userTest"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	UserTest  int32     `json:"user_test"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type UserProfile struct {
-	UserName  string `json:"userName"`
+	UserName  string `json:"user_name"`
 	Email     string `json:"email"`
-	UserTest  int32  `json:"userTest"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
+	UserTest  int32  `json:"user_test"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 }

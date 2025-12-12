@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -89,6 +90,9 @@ func (u *UserHandlers) UserAuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jwtKey := os.Getenv("JWT_SECRET")
+	if jwtKey == "" {
+		log.Fatal("JWT secret is not found in .env")
+	}
 
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
@@ -96,7 +100,7 @@ func (u *UserHandlers) UserAuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
+	tokenString, err := token.SignedString([]byte(jwtKey))
 	if err != nil {
 		json_resp.RespondError(w, 500, "INTERNAL_ERROR", "token generation failed")
 		return
@@ -105,6 +109,7 @@ func (u *UserHandlers) UserAuthHandler(w http.ResponseWriter, r *http.Request) {
 	json_resp.RespondJSON(w, 200, map[string]any{
 		"token": tokenString,
 	})
+
 }
 
 func (u *UserHandlers) GetUserProfile(w http.ResponseWriter, r *http.Request) {

@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/egor_lukyanovich/legal-information-systems/backend/internal/db"
 	"github.com/egor_lukyanovich/legal-information-systems/backend/internal/models"
@@ -22,7 +21,7 @@ func NewSiteHandlers(queries *db.Queries) *SiteHandlers {
 }
 
 func (s *SiteHandlers) CreateTheory(w http.ResponseWriter, r *http.Request) {
-	var input models.Theory
+	var input models.TheoryInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		json_resp.RespondError(w, 400, "BAD_REQUEST", "invalid body")
 		return
@@ -31,8 +30,7 @@ func (s *SiteHandlers) CreateTheory(w http.ResponseWriter, r *http.Request) {
 	newTheory, err := s.q.CreateTheory(r.Context(), db.CreateTheoryParams{
 		Name:        input.Name,
 		Description: input.Description,
-		Theoryfull:  input.Theoryfull,
-		CreatedAt:   time.Now(),
+		Theoryfull:  input.TheoryFull,
 	})
 	if err != nil {
 		json_resp.RespondError(w, 500, "INTERNAL_ERROR", "failed to create theory")
@@ -43,7 +41,7 @@ func (s *SiteHandlers) CreateTheory(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *SiteHandlers) CreateExample(w http.ResponseWriter, r *http.Request) {
-	var input models.Example
+	var input models.ExampleInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		json_resp.RespondError(w, 400, "BAD_REQUEST", "invalid body")
 		return
@@ -53,7 +51,6 @@ func (s *SiteHandlers) CreateExample(w http.ResponseWriter, r *http.Request) {
 		Name:        input.Name,
 		Description: input.Description,
 		FullExample: input.FullExample,
-		CreatedAt:   time.Now(),
 	})
 	if err != nil {
 		json_resp.RespondError(w, 500, "INTERNAL_ERROR", "failed to create example")
@@ -63,7 +60,47 @@ func (s *SiteHandlers) CreateExample(w http.ResponseWriter, r *http.Request) {
 	json_resp.RespondJSON(w, 200, newExample)
 }
 
-func (s *SiteHandlers) CreateTest(w http.ResponseWriter, r *http.Request) {} //потом
+func (s *SiteHandlers) CreateTest(w http.ResponseWriter, r *http.Request) {
+	var input models.CreateTestInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		json_resp.RespondError(w, 400, "BAD_REQUEST", "invalid body")
+		return
+	}
+
+	ctx := r.Context()
+
+	newTest, err := s.q.CreateTest(ctx, input.Name)
+	if err != nil {
+		json_resp.RespondError(w, 500, "INTERNAL_ERROR", "failed to create test")
+		return
+	}
+
+	for _, qInput := range input.Questions {
+		newQuestion, err := s.q.CreateQuestion(ctx, db.CreateQuestionParams{
+			TestID:   newTest.ID,
+			Text:     qInput.Text,
+			Multiple: qInput.Multiple,
+		})
+		if err != nil {
+			json_resp.RespondError(w, 500, "INTERNAL_ERROR", "failed to create question")
+			return
+		}
+
+		for _, aInput := range qInput.Answers {
+			_, err := s.q.CreateAnswer(ctx, db.CreateAnswerParams{
+				QuestionID: newQuestion.ID,
+				Text:       aInput.Text,
+				IsCorrect:  aInput.IsCorrect,
+			})
+			if err != nil {
+				json_resp.RespondError(w, 500, "INTERNAL_ERROR", "failed to create answer")
+				return
+			}
+		}
+	}
+	//какого то хуя все варианты ответа по базе false после создания теста, и get questions высерает собственно правильный ответ
+	json_resp.RespondJSON(w, 200, map[string]string{"status": "Test created successfully"})
+}
 
 func (s *SiteHandlers) GetTheories(w http.ResponseWriter, r *http.Request) {
 	theoriesDB, err := s.q.ListTheories(r.Context())

@@ -40,7 +40,7 @@ type Theory struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name" validate:"required, min=4, max=50"`
 	Description string    `json:"description" validate:"required, min=2, max=50"`
-	Theoryfull  string    `json:"theoryfull" validate:"required, min=4"`
+	Theoryfull  string    `json:"theory_full" validate:"required, min=4"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
@@ -55,18 +55,47 @@ type TestFullResponse struct {
 }
 
 type UserAnswerInput struct {
-	QuestionID        int32   `json:"questionId"`
-	SelectedAnswerIDs []int32 `json:"selectedAnswerIds"`
+	QuestionID        int32   `json:"question_id"`
+	SelectedAnswerIDs []int32 `json:"selected_answer_ids"`
 }
 
 type TestAnswerRequest struct {
-	TestID  uuid.UUID         `json:"testId"`
+	TestID  uuid.UUID         `json:"test_id"`
 	Answers []UserAnswerInput `json:"answers"`
 }
 
 type TestAnswerResponse struct {
-	TotalQuestions int  `json:"totalQuestions"`
-	CorrectAnswers int  `json:"correctAnswers"`
-	IsPassed       bool `json:"isPassed"`
-	ScorePercent   int  `json:"scorePercent"`
+	TotalQuestions int  `json:"total_questions"`
+	CorrectAnswers int  `json:"correct_answers"`
+	IsPassed       bool `json:"is_passed"`
+	ScorePercent   int  `json:"score_percent"`
+}
+
+//-- Чистые модели для создания
+
+type CreateAnswerInput struct {
+	Text      string `json:"text"`
+	IsCorrect bool   `json:"is_correct"`
+}
+
+type CreateQuestionInput struct {
+	Text     string              `json:"text"`
+	Multiple bool                `json:"multiple"`
+	Answers  []CreateAnswerInput `json:"answers"`
+}
+
+type CreateTestInput struct {
+	Name      string                `json:"test_name"`
+	Questions []CreateQuestionInput `json:"questions"`
+}
+type TheoryInput struct {
+	Name        string `json:"theory_name"`
+	Description string `json:"theory_description"`
+	TheoryFull  string `json:"theory_full"`
+}
+
+type ExampleInput struct {
+	Name        string `json:"example_name"`
+	Description string `json:"example_description"`
+	FullExample string `json:"full_example"` //тут еще посмотреть как удобнее будет
 }
