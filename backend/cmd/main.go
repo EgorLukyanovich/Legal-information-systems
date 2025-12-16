@@ -24,16 +24,18 @@ func main() {
 
 	router.Post("/user/create", userHandler.CreateUser)
 	router.Post("/user/auth", userHandler.UserAuthHandler)
-	router.Post("/answers", handlers.AuthMiddleware(siteHandler.SubmitTestAnswers))
-	router.Post("/admin/theory", handlers.AuthMiddleware(siteHandler.CreateTheory))
-	router.Post("/admin/example", handlers.AuthMiddleware(siteHandler.CreateExample))
-	router.Post("/admin/test", handlers.AuthMiddleware(siteHandler.CreateTest))
+
+	router.Post("/answer", handlers.AuthMiddleware(siteHandler.SubmitTestAnswers))
+	router.Post("/theories/submit", handlers.AuthMiddleware(siteHandler.CreateTheory))
+	router.Post("/examples/submit", handlers.AuthMiddleware(siteHandler.CreateExample))
+	router.Post("/tests/submit", handlers.AuthMiddleware(siteHandler.CreateTest))
 
 	router.Get("/user/profile", handlers.AuthMiddleware(userHandler.GetUserProfile))
 
-	router.Get("/theory/get", handlers.AuthMiddleware(siteHandler.GetTheories))
-	router.Get("/example/get", handlers.AuthMiddleware(siteHandler.GetExamples))
-	router.Get("/questions/get", handlers.AuthMiddleware(siteHandler.GetQuestions))
+	router.Get("/theories", handlers.AuthMiddleware(siteHandler.GetTheories))
+	router.Get("/tests", handlers.AuthMiddleware(siteHandler.GetTests))
+	router.Get("/examples", handlers.AuthMiddleware(siteHandler.GetExamples))
+	router.Get("/questions", handlers.AuthMiddleware(siteHandler.GetQuestions))
 
 	server := &http.Server{
 		Handler:           router,

@@ -62,6 +62,7 @@ func (s *SiteHandlers) CreateExample(w http.ResponseWriter, r *http.Request) {
 
 func (s *SiteHandlers) CreateTest(w http.ResponseWriter, r *http.Request) {
 	var input models.CreateTestInput
+
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		json_resp.RespondError(w, 400, "BAD_REQUEST", "invalid body")
 		return
@@ -99,6 +100,7 @@ func (s *SiteHandlers) CreateTest(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	//какого то хуя все варианты ответа по базе false после создания теста, и get questions высерает собственно правильный ответ
+	//решилось или нет пока не тестил
 	json_resp.RespondJSON(w, 200, map[string]string{"status": "Test created successfully"})
 }
 
@@ -214,6 +216,28 @@ func (s *SiteHandlers) GetQuestions(w http.ResponseWriter, r *http.Request) {
 	json_resp.RespondJSON(w, 200, finalResponse)
 }
 
+func (s *SiteHandlers) GetTests(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	testDB, err := s.q.GetTests(ctx)
+	if err != nil {
+		json_resp.RespondError(w, 500, "INTERNAL_ERROR", "failed to fetch test")
+		return
+	}
+
+	response := make([]models.Example, 0, len(testDB))
+	for _, e := range testDB {
+		response = append(response, models.Example{
+			ID:        e.ID,
+			Name:      e.Name,
+			CreatedAt: e.CreatedAt,
+		})
+	}
+
+	json_resp.RespondJSON(w, 200, response)
+
+}
+
 func (s *SiteHandlers) SubmitTestAnswers(w http.ResponseWriter, r *http.Request) {
 	var req models.TestAnswerRequest
 
@@ -236,17 +260,14 @@ func (s *SiteHandlers) SubmitTestAnswers(w http.ResponseWriter, r *http.Request)
 	}
 
 	score := 0
-	totalQuestions := len(correctMap)
-
 	for _, userAns := range req.Answers {
-
 		correctIDs, exists := correctMap[userAns.QuestionID]
 		if !exists {
-			continue // вопроса нема либо у него ответов нема
+			continue // вопроса нет в базе или у него нет правильных ответов
 		}
 
 		if len(userAns.SelectedAnswerIDs) != len(correctIDs) {
-			continue // ответ неверный, выбрано лишнее или выбрана хуета
+			continue
 		}
 
 		isCorrect := true
@@ -269,16 +290,9 @@ func (s *SiteHandlers) SubmitTestAnswers(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	percent := 0
-	if totalQuestions > 0 {
-		percent = (score * 100) / totalQuestions
-	}
-
 	resp := models.TestAnswerResponse{
-		TotalQuestions: totalQuestions,
-		CorrectAnswers: score,
-		ScorePercent:   percent,
-		IsPassed:       percent >= 70, // пока всегда 70%
+		TestID: req.TestID,
+		Score:  score,
 	}
 
 	json_resp.RespondJSON(w, 200, resp)

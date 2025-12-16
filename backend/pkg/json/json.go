@@ -15,7 +15,7 @@ func RespondError(w http.ResponseWriter, code int, errCode, msg string) {
 
 	res := models.ErrorResponse{}
 	res.Error.Code = errCode
-	res.Error.Message = msg
+	res.Error.Text = msg
 
 	RespondJSON(w, code, res)
 }

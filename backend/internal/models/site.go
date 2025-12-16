@@ -16,9 +16,9 @@ type Answer struct {
 
 type Example struct {
 	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name" validate:"required, min=4, max=50"`
-	Description string    `json:"description" validate:"required, min=2, max=50"`
-	FullExample string    `json:"full_example" validate:"required, min=4"`
+	Name        string    `json:"example_name" validate:"required, min=4, max=50"`
+	Description string    `json:"example_description" validate:"required, min=2, max=50"`
+	FullExample string    `json:"example_full" validate:"required, min=4"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
@@ -31,15 +31,15 @@ type Question struct {
 }
 
 type Test struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name" validate:"required, min=2, max=50"`
+	ID        uuid.UUID `json:"test_id"`
+	Name      string    `json:"test_name" validate:"required, min=2, max=50"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 type Theory struct {
 	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name" validate:"required, min=4, max=50"`
-	Description string    `json:"description" validate:"required, min=2, max=50"`
+	Name        string    `json:"theory_name" validate:"required, min=4, max=50"`
+	Description string    `json:"theory_description" validate:"required, min=2, max=50"`
 	Theoryfull  string    `json:"theory_full" validate:"required, min=4"`
 	CreatedAt   time.Time `json:"created_at"`
 }
@@ -65,10 +65,8 @@ type TestAnswerRequest struct {
 }
 
 type TestAnswerResponse struct {
-	TotalQuestions int  `json:"total_questions"`
-	CorrectAnswers int  `json:"correct_answers"`
-	IsPassed       bool `json:"is_passed"`
-	ScorePercent   int  `json:"score_percent"`
+	TestID uuid.UUID `json:"test_id"`
+	Score  int       `json:"score"`
 }
 
 //-- Чистые модели для создания
@@ -88,6 +86,7 @@ type CreateTestInput struct {
 	Name      string                `json:"test_name"`
 	Questions []CreateQuestionInput `json:"questions"`
 }
+
 type TheoryInput struct {
 	Name        string `json:"theory_name"`
 	Description string `json:"theory_description"`
@@ -97,5 +96,5 @@ type TheoryInput struct {
 type ExampleInput struct {
 	Name        string `json:"example_name"`
 	Description string `json:"example_description"`
-	FullExample string `json:"full_example"` //тут еще посмотреть как удобнее будет
+	FullExample string `json:"example_full"`
 }

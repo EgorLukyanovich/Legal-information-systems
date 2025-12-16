@@ -30,3 +30,31 @@ func (q *Queries) GetActiveTest(ctx context.Context) (Test, error) {
 	err := row.Scan(&i.ID, &i.Name, &i.CreatedAt)
 	return i, err
 }
+
+const getTests = `-- name: GetTests :many
+SELECT id, name, created_at FROM tests 
+ORDER BY created_at DESC
+`
+
+func (q *Queries) GetTests(ctx context.Context) ([]Test, error) {
+	rows, err := q.db.QueryContext(ctx, getTests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Test
+	for rows.Next() {
+		var i Test
+		if err := rows.Scan(&i.ID, &i.Name, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
