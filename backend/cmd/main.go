@@ -8,6 +8,7 @@ import (
 	"github.com/egor_lukyanovich/legal-information-systems/backend/internal/handlers"
 	"github.com/egor_lukyanovich/legal-information-systems/backend/pkg/app"
 	"github.com/egor_lukyanovich/legal-information-systems/backend/pkg/routing"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
@@ -25,18 +26,20 @@ func main() {
 	router.Post("/user/create", userHandler.CreateUser)
 	router.Post("/user/auth", userHandler.UserAuthHandler)
 
-	router.Post("/answer", handlers.AuthMiddleware(siteHandler.SubmitTestAnswers))
-	router.Post("/theories/submit", handlers.AuthMiddleware(siteHandler.CreateTheory))
-	router.Post("/examples/submit", handlers.AuthMiddleware(siteHandler.CreateExample))
-	router.Post("/tests/submit", handlers.AuthMiddleware(siteHandler.CreateTest))
+	router.Group(func(r chi.Router) {
+		r.Use(handlers.AuthMiddleware)
 
-	router.Get("/user/profile", handlers.AuthMiddleware(userHandler.GetUserProfile))
+		r.Post("/answer", siteHandler.SubmitTestAnswers)
+		r.Post("/theories", siteHandler.CreateTheory)
+		r.Post("/examples", siteHandler.CreateExample)
+		r.Post("/tests", siteHandler.CreateTest)
 
-	router.Get("/theories", handlers.AuthMiddleware(siteHandler.GetTheories))
-	router.Get("/tests", handlers.AuthMiddleware(siteHandler.GetTests))
-	router.Get("/examples", handlers.AuthMiddleware(siteHandler.GetExamples))
-	router.Get("/questions", handlers.AuthMiddleware(siteHandler.GetQuestions))
-
+		r.Get("/user/profile", userHandler.GetUserProfile)
+		r.Get("/theories", siteHandler.GetTheories)
+		r.Get("/tests", siteHandler.GetTests)
+		r.Get("/examples", siteHandler.GetExamples)
+		r.Get("/questions", siteHandler.GetQuestions)
+	})
 	server := &http.Server{
 		Handler:           router,
 		Addr:              port,

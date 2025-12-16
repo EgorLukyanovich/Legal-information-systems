@@ -24,10 +24,15 @@ func getJWTKey() []byte {
 	return []byte(secret)
 }
 
-func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		tokenStr := r.Header.Get("token")
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		if r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		tokenStr := r.Header.Get("token")
 		tokenStr = strings.TrimSpace(tokenStr)
 
 		if tokenStr == "" {
@@ -59,5 +64,5 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		ctx := context.WithValue(r.Context(), UserIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
-	}
+	})
 }
