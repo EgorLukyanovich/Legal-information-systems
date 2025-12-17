@@ -8,7 +8,7 @@ info:
 servers:
   - url: 'http://localhost:3000'
 paths:
-  /user-create:
+  /user/create:
     post:
       summary: Регистрация нового пользователя
       operationId: post-user
@@ -24,11 +24,11 @@ paths:
             examples:
               example-1:
                 value:
-                  firstName: Иван
-                  lastName: Петров
+                  first_name: Иван
+                  last_name: Петров
                   email: ivan@mail.ru
                   password: '234567'
-                  userName: Ivan
+                  user_name: Ivan
       responses:
         '200':
           description: Пользователь успешно создан
@@ -43,8 +43,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '500':
-          description: Email уже зарегистрирован
-  /user-authorization:
+          description: Email уже зарегистрирован или внутренняя ошибка
+
+  /user/authorization:
     post:
       summary: Авторизация пользователя
       operationId: post-user-authorization
@@ -100,16 +101,17 @@ paths:
               examples:
                 example-1:
                   value:
-                    userName: Sava
+                    user_name: Sava
                     email: sava@mail.ru
-                    userTest: 5
-                    firstName: Савелий
-                    lastName: Булатов
+                    user_test: 5
+                    first_name: Савелий
+                    last_name: Булатов
         '401':
           description: Пользователь не авторизован
         '500':
-          description: Ошибка сервера)
-  /answer: #ОТСЮДА ПРОДОЛЖИТЬ
+          description: Ошибка сервера
+
+  /answer:
     post:
       summary: Отправка ответов на тест
       operationId: post-answer
@@ -132,13 +134,13 @@ paths:
             examples:
               example-1:
                 value:
-                  testId: 1
+                  test_id: "550e8400-e29b-41d4-a716-446655440000"
                   answers:
-                    - questionId: 101
-                      selectedAnswerIds:
+                    - question_id: 101
+                      selected_answer_ids:
                         - 3
-                    - questionId: 102
-                      selectedAnswerIds:
+                    - question_id: 102
+                      selected_answer_ids:
                         - 5
       responses:
         '200':
@@ -155,21 +157,22 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           description: Ошибка сервера
-  /theory:
+  /theories:
     get:
-      summary: Получение теорий
-      operationId: get-theory
+      summary: Получение списка теорий
+      operationId: get-theories
       tags:
         - site
       parameters:
         - name: token
           in: header
+          required: true
           schema:
             type: string
           description: Токен авторизации
       responses:
         '200':
-          description: OK
+          description: Список теорий успешно получен
           content:
             application/json:
               schema:
@@ -179,9 +182,10 @@ paths:
               examples:
                 example-1:
                   value:
-                    - theoryName: Название теории
-                      theoryDescription: Краткое описание
-                      theoryFull: Полный текст теории
+                    - id: "550e8400-e29b-41d4-a716-446655440000"
+                      theory_name: Название теории
+                      theory_description: Краткое описание
+                      theory_full: Полный текст теории
         '422':
           description: Ошибка валидации
           content:
@@ -190,15 +194,54 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           description: Внутренняя ошибка сервера
-  /exemple:
+  
+  /theories:
+    post:
+      summary: Создание новой теории
+      operationId: post-theory-submit
+      tags:
+        - admin
+      description: Добавление нового теоретического материала в базу данных
+      parameters:
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Токен администратора
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TheoryInput'
+            examples:
+              example-1:
+                value:
+                  theory_name: "Основы гражданского права"
+                  theory_description: "Вводный курс в ГК РФ"
+                  theory_full: "Полный текст теории здесь..."
+      responses:
+        '200':
+          description: Теория успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Theory'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  
+  /exemples:
     get:
-      summary: Получение примеров
+      summary: Получение списка примеров
       description: 'Возвращает список примеров, связанных с теорией'
       tags:
         - site
       responses:
         '200':
-          description: OK
+          description: Список примеров получен
           content:
             application/json:
               schema:
@@ -208,10 +251,10 @@ paths:
               examples:
                 example-1:
                   value:
-                    - id: 1
-                      exampleName: Пример 1
-                      exampleDescription: Краткое описание
-                      exampleFull: Полный текст примера
+                    - id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+                      example_name: Пример 1
+                      example_description: Краткое описание
+                      example_full: Полный текст примера
         '422':
           description: Ошибка валидации
           content:
@@ -220,6 +263,132 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           description: Внутренняя ошибка сервера
+  /examples:
+    post:
+      summary: Создание нового примера
+      operationId: post-example-submit
+      tags:
+        - admin
+      description: Добавление нового практического примера, связанного с теорией
+      parameters:
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Токен администратора
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExampleInput'
+            examples:
+              example-1:
+                value:
+                  example_name: "Пример решения такого-то кейса"
+                  example_description: "Разбор статьи 15 ГК РФ"
+                  example_full: "Здесь подробный текст примера че как и кто по итогу выйграл дело"
+      responses:
+        '200':
+          description: Пример успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Example'
+        '400':
+          description: Невалидный JSON или отсутствуют поля
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Ошибка на стороне базы данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /tests:
+    post:
+      summary: Создание нового теста с вопросами и ответами
+      operationId: post-test-submit
+      tags:
+        - admin
+      description: Позволяет создать тест целиком, передав массив вопросов и вложенных вариантов ответов.
+      parameters:
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Токен администратора
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTestInput'
+      responses:
+        '200':
+          description: Тест успешно создан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Test created successfully"
+        '400':
+          description: Невалидный JSON или отсутствуют поля
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Ошибка на стороне базы данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /tests:
+    get:
+      summary: Получение списка доступных тестов
+      operationId: get-tests
+      tags:
+        - site
+      description: Возвращает краткую информацию о всех тестах (ID и название).
+      parameters:
+        - name: token
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Токен авторизации
+      responses:
+        '200':
+          description: Список тестов успешно получен
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TestShort'
+              examples:
+                example-1:
+                  value:
+                    - id: "550e8400-e29b-41d4-a716-446655440000"
+                      test_name: "Основы права"
+                      created_at: "2023-10-27T10:00:00Z"
+                    - id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+                      test_name: "Гражданский кодекс"
+                      created_at: "2023-10-28T12:30:00Z"
+        '500':
+          $ref: '#/components/responses/InternalError'
+  
+  
   /questions:
     get:
       summary: Получение теста с вопросами
@@ -239,33 +408,33 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Test'
+                $ref: '#/components/schemas/TestFullResponse'
               examples:
                 example-1:
                   value:
-                    testId: 1
-                    testName: Тест 1
+                    test_id: "550e8400-e29b-41d4-a716-446655440000"
+                    test_name: "Основы права"
                     questions:
                       - id: 101
-                        text: Сколько вам лет?
+                        text: "Какая отрасль права регулирует имущественные отношения?"
                         multiple: false
                         answers:
                           - id: 1
-                            text: '16'
+                            text: "Уголовное"
                           - id: 2
-                            text: '17'
+                            text: "Гражданское"
                           - id: 3
-                            text: '18'
+                            text: "Административное"
                       - id: 102
-                        text: Какой ваш любимый цвет?
-                        multiple: false
+                        text: "Выберите источники права"
+                        multiple: true
                         answers:
                           - id: 4
-                            text: Красный
+                            text: "Закон"
                           - id: 5
-                            text: Синий
+                            text: "Обычай"
                           - id: 6
-                            text: Зелёный
+                            text: "Мнение соседа"
         '422':
           description: Ошибка валидации
           content:
@@ -281,11 +450,11 @@ components:
       type: object
       description: Данные пользователя
       properties:
-        firstName:
+        first_name:
           type: string
           description: Имя
           example: Иван
-        lastName:
+        last_name:
           type: string
           description: Фамилия
           example: Петров
@@ -300,18 +469,18 @@ components:
           minLength: 6
           maxLength: 25
           example: '234567'
-        userName:
+        user_name:
           type: string
           description: Логин
           minLength: 4
           maxLength: 20
           example: Ivan
       required:
-        - firstName
-        - lastName
+        - first_name
+        - last_name
         - email
         - password
-        - userName
+        - user_name
     UserAuthorization:
       title: UserAuthorization
       type: object
@@ -337,96 +506,147 @@ components:
       description: Профиль пользователя
       type: object
       properties:
-        userName:
+        user_name:
           type: string
           example: Sava
         email:
           type: string
           example: sava@mail.ru
-        userTest:
+        user_test:
           type: integer
           example: 5
-        firstName:
+        first_name:
           type: string
           example: Савелий
-        lastName:
+        last_name:
           type: string
           example: Булатов
       required:
-        - userName
+        - user_name
         - email
-        - firstName
-        - lastName
+        - first_name
+        - last_name
     Theory:
       title: Theory
       description: Теоретический материал
       type: object
       properties:
-        theoryName:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        theory_name:
           type: string
           example: Название теории
-        theoryDescription:
+        theory_description:
           type: string
           example: Краткое описание
-        theoryFull:
+        theory_full:
           type: string
           example: Полный текст теории
+
+    TheoryInput:
+      title: TheoryInput
+      type: object
+      required:
+        - theory_name
+        - theory_description
+        - theory_full
+      properties:
+        theory_name:
+          type: string
+          description: Название теории
+          example: "Основы гражданского права"
+        theory_description:
+          type: string
+          description: Краткое описание
+          example: "Вводный курс в ГК РФ"
+        theory_full:
+          type: string
+          description: Полное содержание
+          example: "Текст теории..."
+
+
     Example:
       title: Example
       description: 'Пример, связанный с теорией'
       type: object
       properties:
         id:
-          type: integer
-          example: 1
-        exampleName:
+          type: string
+          format: uuid
+          example: "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+        example_name:
           type: string
           example: Пример 1
-        exampleDescription:
+        example_description:
           type: string
           example: Краткое описание
-        exampleFull:
+        example_full:
           type: string
           example: Полный текст примера
+
+
+    ExampleInput:
+      title: ExampleInput
+      type: object
+      required:
+        - example_name
+        - example_description
+        - example_full
+      properties:
+        example_name:
+          type: string
+          description: Заголовок примера
+          example: "Пример решения задачи"
+        example_description:
+          type: string
+          description: Краткое пояснение
+          example: "Разбор конкретного кейса"
+        example_full:
+          type: string
+          description: Полный текст примера
+          example: "Текст примера..."
+    
     TestAnswerRequest:
       title: TestAnswerRequest
       description: Ответы пользователя на тест
       type: object
       properties:
-        testId:
-          type: integer
-          example: 1
+        test_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
         answers:
           type: array
           items:
             type: object
             properties:
-              questionId:
+              question_id:
                 type: integer
                 example: 101
-              selectedAnswerIds:
+              selected_answer_ids:
                 type: array
                 items:
                   type: integer
-                example:
-                  - 3
-                  - 5
+                example: [3, 5]
       required:
-        - testId
+        - test_id
         - answers
     TestAnswerResponse:
       title: TestAnswerResponse
       description: Результат проверки теста
       type: object
       properties:
-        testId:
-          type: integer
-          example: 1
+        test_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
         score:
           type: integer
           example: 2
       required:
-        - testId
+        - test_id
         - score
     Error:
       title: Error
@@ -447,11 +667,12 @@ components:
       description: Тест с вопросами и вариантами ответов
       type: object
       properties:
-        testId:
-          type: integer
+        test_id:
+          type: string
+          format: uuid
           description: ID теста
-          example: 1
-        testName:
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        test_name:
           type: string
           description: Название теста
           minLength: 4
@@ -463,9 +684,65 @@ components:
           items:
             $ref: '#/components/schemas/Question'
       required:
-        - testId
-        - testName
+        - test_id
+        - test_name
         - questions
+
+    CreateTestInput:
+      title: CreateTestInput
+      type: object
+      required:
+        - test_name
+        - questions
+      properties:
+        test_name:
+          type: string
+          description: Название создаваемого теста
+          example: "Итоговый тест по главе 1"
+        questions:
+          type: array
+          description: Список вопросов к тесту
+          items:
+            $ref: '#/components/schemas/CreateQuestionInput'
+
+    CreateQuestionInput:
+      title: CreateQuestionInput
+      type: object
+      required:
+        - text
+        - multiple
+        - answers
+      properties:
+        text:
+          type: string
+          description: Текст вопроса
+          example: "В каком году была принята Конституция РФ?"
+        multiple:
+          type: boolean
+          description: Флаг множественного выбора
+          example: false
+        answers:
+          type: array
+          description: Варианты ответов на вопрос
+          items:
+            $ref: '#/components/schemas/CreateAnswerInput'
+
+    CreateAnswerInput:
+      title: CreateAnswerInput
+      type: object
+      required:
+        - text
+        - is_correct
+      properties:
+        text:
+          type: string
+          description: Текст варианта ответа
+          example: "1993"
+        is_correct:
+          type: boolean
+          description: Является ли этот ответ правильным
+          example: true
+
     Question:
       title: Question
       description: Вопрос в тесте
@@ -512,6 +789,6 @@ components:
         - text
 tags:
   - name: user
-    description: 'Методы, связанные с пользователем'
+    description: 'Методы, связанные с пользователем (регистрация, авторизция, профиль)'
   - name: site
-    description: 'Раздел сайта, доступный после входа'
+    description: 'Основной контент сайта (теория, примеры, тесты)'
