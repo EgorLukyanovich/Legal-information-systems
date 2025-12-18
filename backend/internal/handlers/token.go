@@ -32,9 +32,13 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		tokenStr := r.Header.Get("token")
-		tokenStr = strings.TrimSpace(tokenStr)
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			json_resp.RespondError(w, 401, "UNAUTHORIZED", "missing token")
+			return
+		}
 
+		tokenStr := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer"))
 		if tokenStr == "" {
 			json_resp.RespondError(w, 401, "UNAUTHORIZED", "missing token")
 			return
@@ -65,4 +69,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), UserIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func FromContext(ctx context.Context) (uuid.UUID, bool) {
+	userID, ok := ctx.Value(UserIDKey).(uuid.UUID)
+	return userID, ok
 }
