@@ -9,9 +9,6 @@ import (
 	json_resp "github.com/egor_lukyanovich/legal-information-systems/backend/pkg/json"
 )
 
-/*
-TODO: CreateTest доделать
-*/
 type SiteHandlers struct {
 	q *db.Queries
 }

@@ -7,3 +7,6 @@ SELECT * FROM tests LIMIT 1;
 -- name: GetTests :many
 SELECT id, name, created_at FROM tests 
 ORDER BY created_at DESC;
+
+-- name: GetTestByName :one
+SELECT * FROM tests WHERE name = $1 LIMIT 1;

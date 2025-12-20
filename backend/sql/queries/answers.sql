@@ -12,3 +12,8 @@ SELECT
 FROM questions q
 JOIN answers a ON q.id = a.question_id
 WHERE q.test_id = $1 AND a.is_correct = TRUE;
+
+-- name: GetAnswerByQuestionAndText :one
+SELECT * FROM answers
+WHERE question_id = $1 AND text = $2
+LIMIT 1;

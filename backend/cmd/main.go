@@ -1,17 +1,20 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/egor_lukyanovich/legal-information-systems/backend/internal/handlers"
+	seeds "github.com/egor_lukyanovich/legal-information-systems/backend/internal/seeds"
 	"github.com/egor_lukyanovich/legal-information-systems/backend/pkg/app"
 	"github.com/egor_lukyanovich/legal-information-systems/backend/pkg/routing"
 	"github.com/go-chi/chi/v5"
 )
 
 func main() {
+	ctx := context.Background()
 	storage, port, err := app.InitDB()
 	if err != nil {
 		log.Fatalf("DB initialization failed: %v", err)
@@ -40,6 +43,21 @@ func main() {
 		r.Get("/examples", siteHandler.GetExamples)
 		r.Get("/questions", siteHandler.GetQuestions)
 	})
+
+	if err := seeds.SeedAdminLawTest(ctx, storage.Queries); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := seeds.SeedAdminExamples(ctx, storage.Queries); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := seeds.SeedAdminTheory(ctx, storage.Queries); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Database seeded successfully")
+
 	server := &http.Server{
 		Handler:           router,
 		Addr:              port,

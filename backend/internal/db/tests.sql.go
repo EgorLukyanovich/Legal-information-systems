@@ -31,6 +31,17 @@ func (q *Queries) GetActiveTest(ctx context.Context) (Test, error) {
 	return i, err
 }
 
+const getTestByName = `-- name: GetTestByName :one
+SELECT id, name, created_at FROM tests WHERE name = $1 LIMIT 1
+`
+
+func (q *Queries) GetTestByName(ctx context.Context, name string) (Test, error) {
+	row := q.db.QueryRowContext(ctx, getTestByName, name)
+	var i Test
+	err := row.Scan(&i.ID, &i.Name, &i.CreatedAt)
+	return i, err
+}
+
 const getTests = `-- name: GetTests :many
 SELECT id, name, created_at FROM tests 
 ORDER BY created_at DESC

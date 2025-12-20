@@ -40,6 +40,23 @@ func (q *Queries) CreateTheory(ctx context.Context, arg CreateTheoryParams) (The
 	return i, err
 }
 
+const getTheoryByName = `-- name: GetTheoryByName :one
+SELECT id, name, description, theoryfull, created_at FROM theories WHERE name = $1 LIMIT 1
+`
+
+func (q *Queries) GetTheoryByName(ctx context.Context, name string) (Theory, error) {
+	row := q.db.QueryRowContext(ctx, getTheoryByName, name)
+	var i Theory
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Theoryfull,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listTheories = `-- name: ListTheories :many
 SELECT id, name, description, theoryFull, created_at FROM theories 
 ORDER BY created_at DESC

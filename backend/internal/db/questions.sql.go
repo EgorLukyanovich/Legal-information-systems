@@ -35,6 +35,30 @@ func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) 
 	return i, err
 }
 
+const getQuestionByTestAndText = `-- name: GetQuestionByTestAndText :one
+SELECT id, test_id, text, multiple, created_at FROM questions
+WHERE test_id = $1 AND text = $2
+LIMIT 1
+`
+
+type GetQuestionByTestAndTextParams struct {
+	TestID uuid.UUID
+	Text   string
+}
+
+func (q *Queries) GetQuestionByTestAndText(ctx context.Context, arg GetQuestionByTestAndTextParams) (Question, error) {
+	row := q.db.QueryRowContext(ctx, getQuestionByTestAndText, arg.TestID, arg.Text)
+	var i Question
+	err := row.Scan(
+		&i.ID,
+		&i.TestID,
+		&i.Text,
+		&i.Multiple,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listQuestionsByTestID = `-- name: ListQuestionsByTestID :many
 SELECT id, test_id, text, multiple, created_at FROM questions WHERE test_id = $1 ORDER BY id
 `

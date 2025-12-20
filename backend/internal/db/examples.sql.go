@@ -40,6 +40,23 @@ func (q *Queries) CreateExample(ctx context.Context, arg CreateExampleParams) (E
 	return i, err
 }
 
+const getExampleByName = `-- name: GetExampleByName :one
+SELECT id, name, description, full_example, created_at FROM examples WHERE name = $1 LIMIT 1
+`
+
+func (q *Queries) GetExampleByName(ctx context.Context, name string) (Example, error) {
+	row := q.db.QueryRowContext(ctx, getExampleByName, name)
+	var i Example
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.FullExample,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listExamples = `-- name: ListExamples :many
 SELECT id, name, description, full_example, created_at FROM examples 
 ORDER BY created_at DESC

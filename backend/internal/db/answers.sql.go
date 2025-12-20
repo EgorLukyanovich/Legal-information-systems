@@ -36,6 +36,30 @@ func (q *Queries) CreateAnswer(ctx context.Context, arg CreateAnswerParams) (Ans
 	return i, err
 }
 
+const getAnswerByQuestionAndText = `-- name: GetAnswerByQuestionAndText :one
+SELECT id, question_id, text, is_correct, created_at FROM answers
+WHERE question_id = $1 AND text = $2
+LIMIT 1
+`
+
+type GetAnswerByQuestionAndTextParams struct {
+	QuestionID int32
+	Text       string
+}
+
+func (q *Queries) GetAnswerByQuestionAndText(ctx context.Context, arg GetAnswerByQuestionAndTextParams) (Answer, error) {
+	row := q.db.QueryRowContext(ctx, getAnswerByQuestionAndText, arg.QuestionID, arg.Text)
+	var i Answer
+	err := row.Scan(
+		&i.ID,
+		&i.QuestionID,
+		&i.Text,
+		&i.IsCorrect,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getTestCorrectAnswers = `-- name: GetTestCorrectAnswers :many
 SELECT 
     q.id AS question_id, 
